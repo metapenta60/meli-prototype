@@ -1,0 +1,140 @@
+# Design Overview & Rationale
+**Date:** 2025-08-25
+
+
+## Goals & Scope
+This prototype focuses on a minimal, Meli-like item catalog experience. Key constraints:
+- **Unit items only** (no weight/"pesables").
+- **No payment promotions** (only methods/instalments).
+- **No Q&A** in scope.
+- **No `PublicationType`** (not required for current logic).
+- **Vendor name** never renders “mercado líder premium”.
+- **Single identifier: `SKU`** per (seller, product). No other IDs publicly.
+- **Up to 8 images**, all with **equal relevance**.
+- **Single family level**.
+- **Characteristics embedded in the item** (change infrequently).
+- **Reviews** do not show buyer identity (aligned with ML UI).
+- **No internationalization** (single locale).
+
+## Architecture (Go + Gin + Frontend)
+- **Top-level repo layout**
+  - `frontend/`: UI application (React/Vite or Next.js), consumes the v1 API and renders:
+    - Item detail (by SKU), images (≤ 8), characteristics, ratings, payments.
+    - “Top Sellers” view.
+  - `backend/`: Go service (Gin) exposing the v1 API.
+
+- **Backend folder layout**
+  - `cmd/server/`: entrypoint (wires config, DB, services, router).
+  - `internal/http/`: `router.go`, handlers, DTOs.
+  - `internal/service/`: business use-cases.
+  - `internal/repository/`: DB access (DAO ↔ domain mapping).
+  - `internal/domain/`: domain entities (business-centric).
+  - `internal/db/`: init/migrations (seed data inserted manually).
+
+
+
+- **Router**: `internal/http/router.go` (Gin with CORS + healthcheck; v1 endpoints).
+- **Layer boundaries**
+  - **Repository** maps **DAO ↔ Domain**.
+  - **HTTP** maps **Domain ↔ DTO**.
+  - Avoids coupling HTTP ↔ DB and keeps domain stable.
+
+A graphic representantaion of the backend architecture can be found in the following diagram
+
+![backend](./components.png)
+
+For local development, we provision the database with Docker Compose and manage schema changes using dbmate. The Makefile target make run orchestrates the full flow end-to-end: it brings up the stack, ensures the DB is reachable, runs dbmate up to create/initialize the schema, and then loads the seed data—so a fresh, reproducible environment is available from a single command.
+
+
+## Frontend
+The frontend was built with an atomic design mindset, splitting the UI into small, single-purpose, highly reusable components by functionality—resulting in 30+ components just to render the item view. This granularity enables flexible composition, easier unit testing, and clearer maintenance over time. The outcome is a coherent, scalable component architecture that supports incremental features without sacrificing readability or performance (thanks to targeted memoization where it matters). The most challenging aspect was achieving meaningful test coverage across this highly granular component tree (components, hooks, and utilities).
+
+
+## Data Model 
+The model was designed for scalability and aligned with how Mercado Libre structures its catalog. We studied their approach and replicated the essentials by adopting Product (canonical product) and User Product (seller–SKU linkage). This separation keeps immutable product attributes distinct from seller-specific ones (e.g., price), drives the schema toward high normalization with stable keys and clear relationships (Product, UserProduct, Seller, Family, Images, Characteristics, Ratings), and yields a coherent, low-duplication catalog that’s easy to index and extend to new categories without breaking contracts—mirroring how a real marketplace would operate.
+![model](./model.png)
+
+
+- **Item**
+  - `sku` (PK), `title`, `status`, `price`, `soldCount`
+  - `ratingInfo` (overallRating, totalRatings, distribution[], reviews[] w/o buyer)
+  - `characteristicsInfo` (mainCharacteristics[], otherCharacteristics[])
+  - `images[]` (≤ 8, equal weight)
+  - `family` (single level), `sellerRef` (ID/slug; do not render “mercado líder premium”)
+- **Seller**
+  - `sellerId/slug` (PK), `name`, `rating`, `followersCount`, `productsCount`, `salesCount`
+ (top-sellers only)**
+  - `sku` (PK), `parentSku` (FK → Item.sku), `attrs` (e.g., color), `price`
+  - When a variant is selected, render the **lowest-priced** item.
+
+**Conventions**
+- Go struct fields: `PascalCase`.
+- JSON in DTOs: `camelCase`.
+- DB columns: `snake_case`.
+
+## API (v1)
+- `GET /api/v1/items/:sku` — item detail by **SKU**.
+- DTOs mirror the front-end contract (TypeScript interfaces provided).  `ratingDistribution` may be `null` or derived from `ratingInfo.distribution`.
+
+## Error Handling & Dev Ops
+- `404` on missing item; `501` when service is not wired (prototype guard).
+- Open CORS for prototyping; to be restricted in real environments.
+- Seed data inserted manually for E2E flows.
+- Simple indexes: `items.sku`, `items.seller_ref` (if persisted in SQL).
+
+## Trade-offs
+- **Characteristics embedded**: avoids early over-normalization; faster delivery. Future: promote to tables by family when necessary.
+- **Images equal weight**: keeps UI deterministic and simple; future: add ordering/cover flag.
+
+## Challenges & How They Were Addressed
+1. **Catalog complexity / attribute explosion**  
+   **Approach**: keep `characteristicsInfo` embedded; define stable keys (main vs other). Defer normalization.
+   **Approach**: encapsulate a simple “pick-lowest-price” rule to allow future replacement without breaking DTOs.
+3. **Consistent identifiers**  
+   **Approach**: pick **SKU** as the only public identifier; document rules around uniqueness and seller scoping.
+4. **Layered mapping (DAO/Domain/DTO)**  
+   **Approach**: repositories handle DAO↔Domain; HTTP layer handles Domain↔DTO to avoid cross-layer leaks.
+5. **Image handling (≤ 8, heterogeneous sources)**  
+   **Approach**: enforce length cap; treat all as equal priority; sanitize/normalize URLs at the edge if needed.
+6. **CORS & local dev**  
+   **Approach**: permissive CORS for prototype; note to lock down per env later.
+7. **Manual seeds**  
+   **Approach**: tracked fixtures and reproducible inserts; upgrade path to migration-based seeds.
+
+## How to Run
+### Backend
+
+Prerequisites: Docker & Docker Compose (for DB) and dbmate available in PATH.
+
+```
+cd backend
+make run
+```
+
+What this does:
+
+- Starts the database via Docker Compose.
+- Runs dbmate up to create/init the schema.
+- Loads seed data.
+- Boots the Gin server.
+- Health check:
+```
+curl http://localhost:8080/health
+```
+
+### Frontend
+```
+cd frontend
+npm install
+npm run dev
+```
+Opens the app locally (Vite default: http://localhost:5173/).
+
+## Future Work
+- Pagination/filters on list endpoint.
+- Optional normalization for characteristics by family/category.
+- AuthN/AuthZ; stricter CORS; rate limiting.
+- Caching of hot items/top lists.
+- Observability (metrics + structured logs).
+- Automated fixtures and property-based tests.
+- Improve tests
