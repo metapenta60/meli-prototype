@@ -1,0 +1,2 @@
+INSERT INTO public.sellers (seller_id,"name",reputation,number_of_products,number_of_sales,number_of_followers,category_description,general_rating,attention_description,puntuality_description,image_id) VALUES
+	 ('1e1e0031-a2dd-43ab-b8a6-12d62d0a1bec'::uuid,'Link Game','Mercado Lider Gold',530,1000,101,'Category Description',4.00,'Brinda buena atención','Entrega sus productos a tiempo','91f20946-1921-4352-91c7-609044fe1256'::uuid);

@@ -1,0 +1,1 @@
+export { useGET } from './useGET';

@@ -1,0 +1,162 @@
+@startuml
+
+hide circle
+hide methods
+skinparam linetype ortho
+
+' ========================
+'        TABLAS
+' ========================
+
+entity "sellers" as sellers  #White {
+  * seller_id : UUID <<PK>>
+  --
+  name : varchar(255)
+  reputation : varchar(50)
+  number_of_products : integer
+  number_of_sales : integer
+  number_of_followers : integer
+  category_description : varchar(255)
+  general_rating : numeric(1,5)
+  attention_description : varchar(255)
+  puntuality_description : varchar(255)
+  image_id : UUID <<FK>>
+}
+
+entity "products" as products   #White {
+  * product_id : UUID <<PK>>
+  --
+  title : varchar(255)
+  model : varchar(255)
+  main_spec : jsonb               ' [{id,titulo,descripcion}]
+  secondary_spec : jsonb          ' [{title,key,value}]
+  family_id : UUID <<FK>>
+  payment_group_id : UUID <<FK>>
+}
+
+entity "user_products" as user_products  #White  {
+  * id : UUID <<PK>>
+  --
+  product_id : UUID <<FK>>
+  seller_id  : UUID <<FK>>
+  sku : varchar(100)
+}
+
+entity "items" as items  #White {
+  * item_id : UUID <<PK>>
+  --
+  user_product_id : UUID <<FK>>
+  title : varchar(255)
+  description : text
+  available_quantity : integer
+  product_status : enum(New, Used, Acondicionado)
+  price_id_fk : UUID <<FK>>
+}
+
+entity "prices" as prices  #White {
+  * id : UUID <<PK>>
+  --
+  value : numeric(18,2)
+  currency_symbol : varchar(10)
+  currency_id : varchar(10)
+}
+
+
+entity "item_images" as item_images  #White {
+  * id : UUID <<PK>>
+  --
+  item_id : UUID <<FK>>
+  image_id : UUID <<FK>>
+}
+
+
+entity "images" as images  #White {
+  * id : UUID <<PK>>
+  --
+  url_small_version  : text
+  url_medium_version : text
+  alt : text
+}
+
+entity "families" as families  #White {
+  * family_id : UUID <<PK>>
+  --
+  title : varchar(255)
+}
+
+
+entity "reviews" as reviews  #White {
+  * id : UUID <<PK>>
+  --
+  product_id : UUID <<FK>>
+  seller_id  : UUID <<FK>>
+  item_id    : UUID <<FK, NULL>>
+  rating : integer                 ' 1..5
+  content: text
+  created_at : timestamp
+}
+
+entity "aggregated_reviews" as aggregated_reviews  #White {
+  * id : UUID <<PK>>
+  --
+  product_id : UUID <<FK>>
+  rating_value : numeric(3,2)      ' promedio
+  rating_count : integer
+}
+
+entity "top_sellers" as top_sellers  #White {
+  * id : UUID <<PK>>
+  --
+  product_id : UUID <<FK>>
+  rating : numeric(1,25)
+  need_to_know_description : text
+}
+
+entity "payment_method_groups" as payment_method_groups  #White {
+  * id : UUID <<PK>>
+}
+
+entity "payment_methods" as payment_methods  #White {
+  * id : UUID <<PK>>
+  --
+  group_id : UUID <<FK>>
+  number_of_installments : integer
+  interest_rate_percentage : numeric(1,25)
+  type: enum(credit, debit, other, transfer)
+  image_id : UUID <<FK>>
+}
+
+entity "questions" as questions  #White {
+  * id : UUID <<PK>>
+  --
+  item_id : UUID <<FK>>
+  question : text
+  answer : text
+  created_at : timestamp
+}
+
+
+sellers ||--o{ user_products : "sell"
+products ||--o{ user_products : "catalog"
+
+user_products ||--o{ items : "publish"
+items ||--o{ item_images : "images"
+items ||--|| prices : "price"
+
+products ||--o{ reviews : "reviews"
+sellers ||--o{ reviews : "recibe"
+
+sellers ||--o{ images : "images"
+
+products ||--o{ families : "families"
+
+products ||--o{ top_sellers : "ranking"
+products ||--o{ aggregated_reviews : "aggregated reviews"
+products ||--|| payment_method_groups : "payment methods"
+payment_method_groups ||--o{ payment_methods : "payment methods"
+
+items ||--o{ questions : "questions"
+
+
+payment_methods ||--o{ images : "images"
+@enduml

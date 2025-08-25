@@ -1,0 +1,8 @@
+INSERT INTO public.images (id,url_small_version,url_medium_version,alt) VALUES
+	 ('91f20946-1921-4352-91c7-609044fe1256'::uuid,'https://http2.mlstatic.com/D_NQ_NP_886170-MLA89143025685_082025-F.jpg','https://http2.mlstatic.com/D_NQ_NP_886170-MLA89143025685_082025-F.jpg','Link Game provider logo'),
+	 ('930d4457-3543-44df-a044-23274ab27a75'::uuid,'https://http2.mlstatic.com/storage/logos-api-admin/a5f047d0-9be0-11ec-aad4-c3381f368aaf-m.svg','https://http2.mlstatic.com/storage/logos-api-admin/a5f047d0-9be0-11ec-aad4-c3381f368aaf-m.svg','Visa logo'),
+	 ('8a2a296b-e29e-4394-9dba-8004217fbdb0'::uuid,'https://http2.mlstatic.com/D_Q_NP_749952-MCO86289279255_062025-R.webp','https://http2.mlstatic.com/D_NQ_NP_2X_749952-MCO86289279255_062025-F.webp','Samsung S24 vista frontal'),
+	 ('ee88a868-6921-4dba-bfd3-a52b0846135f'::uuid,'https://http2.mlstatic.com/D_Q_NP_838555-MCO86289279257_062025-R.webp','https://http2.mlstatic.com/D_NQ_NP_2X_838555-MCO86289279257_062025-F.webp','Samsung S24 Pantalla'),
+	 ('154f3ccc-c851-422e-a9cf-700f811148b8'::uuid,'https://http2.mlstatic.com/D_Q_NP_682942-MCO86289279267_062025-R.webp','https://http2.mlstatic.com/D_NQ_NP_2X_682942-MCO86289279267_062025-F.webp','Samsung S24 vista lateral'),
+	 ('715435d1-2ef6-45c9-afd6-d1dac4675ad1'::uuid,'https://http2.mlstatic.com/D_Q_NP_631136-MCO86289279269_062025-R.webp','https://http2.mlstatic.com/D_NQ_NP_2X_631136-MCO86289279269_062025-F.webp','Samsung S24 vista inclinada'),
+	 ('72ed69c2-12a4-4ffb-883a-6ddf96879090'::uuid,'https://http2.mlstatic.com/D_Q_NP_2X_638888-MCO86289279261_062025-R.webp 2x','https://http2.mlstatic.com/D_NQ_NP_2X_638888-MCO86289279261_062025-F.webp','Samsung S24 vista inclinada');

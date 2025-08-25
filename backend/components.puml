@@ -1,0 +1,82 @@
+@startuml
+title Meli-like Catalog Prototype — Component Diagram (EN)
+
+skinparam backgroundColor White
+skinparam componentStyle rectangle
+skinparam shadowing false
+skinparam defaultTextAlignment left
+skinparam ArrowThickness 1.2
+skinparam ArrowColor #333333
+skinparam component {
+  BackgroundColor White
+  BorderColor Black
+}
+
+package "frontend/" {
+  [Web App (React/Vite or Next.js)] as FE
+}
+
+package "backend/" {
+  [Gin HTTP Server] as GIN
+  [Router (Gin)] as ROUTER
+  [Handlers / Controllers] as HANDLERS
+  [DTOs (JSON)] as DTOS
+  [Mappers (Domain ↔ DTO, DAO ↔ Domain)] as MAPPERS
+
+  package "Service" {
+    [ItemsService] as S_ITEMS
+  }
+
+  package "Repository" {
+    [ItemsRepository] as R_ITEMS
+  }
+
+  [DB Client (GORM/sqlx)] as DBCLIENT
+}
+
+database "PostgreSQL" as DB
+[Seeds / Fixtures (manual test data)] as SEEDS
+
+' --- Main relations ---
+FE --> ROUTER : HTTPS\nGET /api/v1/items/detItemById
+ROUTER --> HANDLERS
+HANDLERS --> DTOS
+HANDLERS --> S_ITEMS
+DTOS .. MAPPERS
+MAPPERS .. S_ITEMS
+S_ITEMS --> R_ITEMS
+R_ITEMS --> DBCLIENT
+DBCLIENT --> DB
+SEEDS ..> DB : initial load
+
+' --- Notes ---
+note right of ROUTER
+Only endpoint (v1):
+- GET /api/v1/items/detItemById
+CORS open (prototype)
+end note
+
+note bottom of S_ITEMS
+Single service:
+- ItemsService orchestrates read models
+- Maps domain to DTO for UI
+end note
+
+note right of DB
+Normalized minimal schema:
+- Product / UserProduct (catalog core)
+- Item (core view), Images, Characteristics
+- Seller, Ratings (aggregates)
+Single family level, no Q&A, no i18n
+end note
+
+note bottom of FE
+UI renders:
+- Item detail by ID/SKU
+- ≤ 8 images (equal relevance)
+- Embedded characteristics
+- Ratings/Reviews (no buyer identity)
+- Payment methods (no promos)
+end note
+
+@enduml

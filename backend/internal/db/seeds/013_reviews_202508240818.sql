@@ -1,0 +1,2 @@
+INSERT INTO public.reviews (id,product_id,seller_id,item_id,rating,"content",created_at) VALUES
+	 ('e95e4b05-f55f-4fdf-80e5-3eb607521442'::uuid,'7d32b232-5a0c-43c4-8f48-34c98533d6a1'::uuid,'1e1e0031-a2dd-43ab-b8a6-12d62d0a1bec'::uuid,'55747713-9cd4-45f7-a4cd-9916ed17a61d'::uuid,5,'Excelentes vendas (en el anuncio dicen ser kinesiologicas y no es así, pero es justo lo que necesitaba) son vendas autoadheribles y transpirables, perfectas para situaciones de heridas abiertas.','2025-08-24 08:14:32.233993');
